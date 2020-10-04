@@ -1,9 +1,12 @@
-import requests
+
 import os
+import time
 import pprint as pp 
+import requests
+import glob
 from basescrapper import BaseScrapper
 from bs4 import BeautifulSoup
-import time
+
 from slugify import slugify
 
 cached_tables = 'tables'
@@ -26,12 +29,17 @@ def get_links():
     links = [{'href':ref.get('href'), 'name':ref.text} for ref in raw_links]
     return links
 
-
-def run_on_link(link, bs=None):
+def get_filename(link):
     slug_name = slugify(link['name'])
     filepath = cached_tables + "/" + slug_name + ".html"
+    return {"filepath":filepath, "slug_name":slug_name}
+    
+
+def run_on_link(link, bs=None):
+    filedetails = get_filename(link)
+    filepath = filedetails['filepath']
+    slug_name = filedetails['slug_name']
     if os.path.isfile(filepath):
-        write_to_cache("No data", filepath)
         return False
     
     bs.goto(link['href'])
@@ -60,8 +68,6 @@ def write_to_cache(data, filepath):
     with open(filepath, "w") as f:
         f.write(data)
     
-
-
 def run(links=None):
     start_at = 0
     num_links = len(links)
@@ -76,7 +82,15 @@ def run(links=None):
 # run(get_links())
 
 
+# files = glob.glob(cached_tables + '/*.html')
 
+# for tablefile in files:
+#     with open(tablefile, "rb") as f:
+#         html = f.read()
+#     if len(html) > 7:
+#         p(html)
+#         quit()
+    
 
 
 
