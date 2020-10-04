@@ -27,15 +27,14 @@ def get_links():
     return links
 
 
-def run_on_link(link):
+def run_on_link(link, bs=None):
     slug_name = slugify(link['name'])
     filepath = cached_tables + "/" + slug_name + ".html"
     if os.path.isfile(filepath):
+        write_to_cache("No data", filepath)
         return False
-
-    selected_link = link['href']
-    bs = BaseScrapper()
-    bs.goto(selected_link)
+    
+    bs.goto(link['href'])
     el = bs.driver.find_element_by_css_selector('a.priceAndPerformance')
     el.click()
 
@@ -44,40 +43,41 @@ def run_on_link(link):
         "let one_third=(bottom/3);" \
         "let half=bottom/2;"
     bs.execute_js(document_sizes + "window.scrollTo(0,one_third);")
-
-
+    bs.screenshot(cached_tables + "/" + slug_name + ".png")
 
     table = bs.driver.find_element_by_css_selector('#performanceView')
     tab = table.find_element_by_css_selector('a.quarterly')
 
     final_table = bs.move(tab).click().perform()
 
-    bs.screenshot()
-
     table = bs.driver.find_element_by_css_selector('div#summaryTotReturnsPerfTab')
     html_table = table.get_attribute('innerHTML')
     
-    with open(filepath, "w") as f:
-        f.write(html_table)
+    write_to_cache(html_table, filepath)
 
-    bs.quit()
+
+def write_to_cache(data, filepath):
+    with open(filepath, "w") as f:
+        f.write(data)
     
 
 
-
-links = get_links()
-
-def run():
+def run(links=None):
     start_at = 0
-    num_links = 26
+    num_links = len(links)
+    bs = BaseScrapper()
     for i in range(start_at, num_links + start_at):
         try:
-            run_on_link(links[i])
+            run_on_link(links[i], bs=bs)
         except Exception as e:
             print(e)
+    bs.quit()
 
-run()
-# run_on_link(links[0])
+# run(get_links())
+
+
+
+
 
 
 

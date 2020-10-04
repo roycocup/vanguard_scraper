@@ -1,4 +1,5 @@
 *.log
+*shortlist.txt
 venv/*
 .vscode/*
 __pycache__/*
