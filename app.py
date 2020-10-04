@@ -79,18 +79,26 @@ def run(links=None):
             print(e)
     bs.quit()
 
-# run(get_links())
+run(get_links())
 
 
-# files = glob.glob(cached_tables + '/*.html')
+def work_on_tables():
+    files = glob.glob(cached_tables + '/*.html')
 
-# for tablefile in files:
-#     with open(tablefile, "rb") as f:
-#         html = f.read()
-#     if len(html) > 7:
-#         p(html)
-#         quit()
-    
+
+    table = {"fund_name":'', 'year':{'Q1':'', 'Q2':'', 'Q3':'', 'Q4':'', 'Year':''}}
+
+    for tablefile in files:
+        with open(tablefile, "rb") as f:
+            data = f.read()
+            soup = BeautifulSoup(data, "html.parser")
+            print(soup.select('table>thead>tr>th'))
+
+            quit()
+        
+
+
+
 
 
 
