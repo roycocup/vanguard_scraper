@@ -4,62 +4,80 @@ import pprint as pp
 from basescrapper import BaseScrapper
 from bs4 import BeautifulSoup
 import time
+from slugify import slugify
+
+cached_tables = 'tables'
+
 
 def p(o):
     pp.pprint(o)
 
 
-htmlfilename = 'vanguard_funds.html'
+def get_links():
+    htmlfilename = 'vanguard_funds.html'
 
-with open(htmlfilename, "rb") as f:
-    data = f.read()
+    with open(htmlfilename, "rb") as f:
+        data = f.read()
 
+    soup = BeautifulSoup(data, "html.parser")
 
-soup = BeautifulSoup(data, "html.parser")
+    raw_links = soup.select("a.linkMargin")
 
-raw_links = soup.select("a.linkMargin")
-
-links = [ref.get('href') for ref in raw_links]
-num_links = len(links)
-
-
-bs = BaseScrapper()
-
-selected_link = links[0]
-
-p(selected_link)
-
-bs.goto(selected_link)
-el = bs.driver.find_element_by_css_selector('a.priceAndPerformance')
-el.click()
-
-time.sleep(5)
-document_sizes = "let bottom=document.body.scrollHeight;" \
-    "let one_third=(bottom/3);" \
-    "let half=bottom/2;"
-bs.execute_js(document_sizes + "window.scrollTo(0,one_third);")
+    links = [{'href':ref.get('href'), 'name':ref.text} for ref in raw_links]
+    return links
 
 
+def run_on_link(link):
+    slug_name = slugify(link['name'])
+    filepath = cached_tables + "/" + slug_name + ".html"
+    if os.path.isfile(filepath):
+        return False
 
-table = bs.driver.find_element_by_css_selector('#performanceView')
-tab = table.find_element_by_css_selector('a.quarterly')
+    selected_link = link['href']
+    bs = BaseScrapper()
+    bs.goto(selected_link)
+    el = bs.driver.find_element_by_css_selector('a.priceAndPerformance')
+    el.click()
 
-final_table = bs.move(tab).click().perform()
+    time.sleep(3)
+    document_sizes = "let bottom=document.body.scrollHeight;" \
+        "let one_third=(bottom/3);" \
+        "let half=bottom/2;"
+    bs.execute_js(document_sizes + "window.scrollTo(0,one_third);")
 
 
-# scrollElementIntoMiddle = "var viewPortHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0); var elementTop = arguments[0].getBoundingClientRect().top; window.scrollBy(0, elementTop-(viewPortHeight/2));"
-# bs.driver.execute_script(scrollElementIntoMiddle, e)
 
-bs.screenshot()
+    table = bs.driver.find_element_by_css_selector('#performanceView')
+    tab = table.find_element_by_css_selector('a.quarterly')
+
+    final_table = bs.move(tab).click().perform()
+
+    bs.screenshot()
+
+    table = bs.driver.find_element_by_css_selector('div#summaryTotReturnsPerfTab')
+    html_table = table.get_attribute('innerHTML')
+    
+    with open(filepath, "w") as f:
+        f.write(html_table)
+
+    bs.quit()
+    
 
 
-final_table.
-bs.quit()
 
-# html = bs.driver.page_source
-# soup = BeautifulSoup(html, 'html.parser')
+links = get_links()
 
-# pp.pprint(soup.prettify)
+def run():
+    start_at = 0
+    num_links = 26
+    for i in range(start_at, num_links + start_at):
+        try:
+            run_on_link(links[i])
+        except Exception as e:
+            print(e)
+
+run()
+# run_on_link(links[0])
 
 
 
